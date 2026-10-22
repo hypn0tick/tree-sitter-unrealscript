@@ -61,12 +61,23 @@ module.exports = grammar({
 		[$.primary_expression, $.new_expression],
 		[$.state_modifier, $.function_modifier],
 		[$.primary_expression],
+		// UE3: 'const' is both a const-decl keyword and a function
+		// specifier (trailing const, const funcs).
+		[$.constant_declaration, $.function_modifier],
+		// '(X=1)' in a defaultproperties value is a struct literal, not a
+		// parenthesized assignment: bias with dynamic precedence.
+		[$.struct_value, $.parenthesized_expression],
 	],
 
 	word: $ => $.identifier,
 
 	rules: {
-		program: $ => repeat(choice($.exec_directive, $.statement)),
+		program: $ => repeat(choice($.exec_directive, $.backtick_macro, $.statement)),
+
+		// Backtick macro lines (UE3 `include, `define, `log, `if, ...):
+		// skipped as opaque tokens anywhere a statement is valid — top
+		// level, function/state bodies, defaultproperties.
+		backtick_macro: _ => token(seq('`', /[^\n]*/)),
 
 		declaration: $ => choice(
 			$.class_declaration,
@@ -79,7 +90,45 @@ module.exports = grammar({
 			$.struct_declaration,
 			$.replication_block,
 			$.defaultproperties,
+			$.struct_default_properties,
+			$.cpp_text,
+			$.struct_cpp_text,
 		),
+
+		// Opaque balanced-brace block for 'cpptext { <raw C++> }':
+		// the C++ is not UnrealScript, so swallow without structure.
+		cpp_text: $ => seq(
+			caseInsensitive('cpptext'),
+			'{',
+			repeat(choice($._cpp_chunk, $._cpp_preproc)),
+			'}',
+		),
+		_cpp_chunk: $ => choice(
+			/[^^{}]+/,
+			seq('{', repeat($._cpp_chunk), '}'),
+		),
+		// C++ preprocessor lines inside cpptext: swallow to end of line so
+		// '#' never starts an UnrealScript directive mid-block. Also the
+		// bare '#' token (e.g. a lone '#' separator line some licensees
+		// emit): [^\n]* matches empty.
+		_cpp_preproc: _ => token(seq('#', /[^\n]*/)),
+		struct_cpp_text: $ => seq(
+			caseInsensitive('structcpptext'),
+			'{',
+			repeat($._cpp_chunk),
+			'}',
+		),
+
+		// UE3 structdefaultproperties { ... }: struct-level defaults
+		// (EliotVU UCParser.g4 structDefaultPropertiesBlock). Same member
+		// shape as defaultproperties.
+		struct_default_properties: $ => prec.right(seq(
+			caseInsensitive('structdefaultproperties'),
+			'{',
+			repeat($._defaultproperties_properties),
+			'}',
+			optional(';'),
+		)),
 
 		class_declaration: $ => seq(
 			caseInsensitive('class'),
@@ -117,14 +166,27 @@ module.exports = grammar({
 			';'
 		),
 
-		function_declaration: $ => seq(
+	function_declaration: $ => seq(
 			field('modifiers', repeat($.function_modifier)),
-			choice(caseInsensitive('function'), caseInsensitive('event')),
-			optional(field('return_type', $.type)),
+			choice(caseInsensitive('function'), caseInsensitive('event'), caseInsensitive('delegate')),
+			optional(field('return_type', $.function_return_type)),
 			field('name', $.identifier),
 			field('parameters', $.function_parameters),
 			choice(field('body', $.block), ';'),
 		),
+
+		// Return type with optional leading 'coerce' (EliotVU
+		// returnTypeModifier; e.g. simulated function coerce string
+		// GetStringRepresentation(...)).
+		function_return_type: $ => seq(
+			optional(caseInsensitive('coerce')),
+			$.type,
+		),
+
+		// Latent state-code labels (Begin:, EndState:, etc.) and stray
+		// identifiers followed by a colon inside state bodies are labels,
+		// not declarations. A label also terminates the preceding statement
+		// list cleanly so error recovery stays local.
 
 		operator_declaration: $ => seq(
 			field('modifiers', repeat($.function_modifier)),
@@ -156,7 +218,9 @@ module.exports = grammar({
 			caseInsensitive('replication'),
 			'{',
 			repeat(seq(
-				field('kind', choice(caseInsensitive('unreliable'), caseInsensitive('reliable'))),
+				// UE3: the reliable/unreliable modifier is optional
+				// (EliotVU replicationStatement: replicationModifier?).
+				field('kind', optional(choice(caseInsensitive('unreliable'), caseInsensitive('reliable')))),
 				caseInsensitive('if'),
 				field('condition', $.condition),
 				field('consequence', commaSep1($.identifier)),
@@ -171,46 +235,189 @@ module.exports = grammar({
 			repeat($._defaultproperties_properties),
 			'}',
 		),
-		_defaultproperties_properties: $ => seq(
+		// UE3 defaultproperties members (EliotVU defaultStatement): plain
+		// assignments, member-call statements (Prop.Add(...)), standalone
+		// Begin Object blocks, and backtick macros. No trailing-newline
+		// requirement: assignments are self-delimiting, which keeps error
+		// recovery local when one line fails.
+		_defaultproperties_properties: $ => choice(
 			$.default_property_assignment,
-			'\n',
+			$.default_object_block,
+			$.default_member_call,
+			$.backtick_macro,
+			';',
 		),
 		default_property_assignment: $ => prec.right('assign', seq(
-			field('property', seq(
-				$.identifier,
-				field('index', optional(seq(choice('(', '['), $.uint, choice(']', ')')))),
-			)),
+			field('property', $.identifier),
+			field('index', optional(seq(choice('(', '['), $.uint, choice(']', ')')))),
 			'=',
-			field('value', $._default_property_value),
+			field('value', choice(
+				$.primary_expression,
+				// class'Foo' object literal (keyword token, not identifier —
+				// the generic `reference` rule cannot match; EliotVU
+				// objectLiteral). NOTE: bare `2` (uint) does NOT parse as
+				// primary_expression in this position — allow it directly
+				// (e.g. DamageWeaponFireMode=2).
+				$.uint,
+				seq(caseInsensitive('class'), $.name),
+				$.default_object_block,
+				$.struct_value,
+				$.brace_struct_value,
+			)),
 		)),
+		// Member calls as defaultproperties statements. Corpus survey of
+		// 3,760 blocks: call receivers are Ident or Ident.Ident only
+		// (0 two-dot receivers, 0 dotted assignment LHS), so both object
+		// forms are written out explicitly — no repeat, LR(1)-safe.
+		//   Components.Add(...)
+		//   StatNameToStatIdMapping.Add(...)   (one-dot receiver)
+		//   VariableLinks.Empty                (bare clear, no args/parens)
+		//   SpawnableData.Add(( A=1 ))       (extra-wrapped args: wrapped
+		//     FIRST — after the method name both '(' (args) and '((...))'
+		//     (wrapped) are possible; LR(1) decides by explicit order)
+		default_member_call: $ => prec(1, seq(
+			field('object', seq(
+				$.identifier,
+				optional(seq('.', $.identifier)),
+			)),
+			'.',
+			field('method', $.identifier),
+			optional(choice(
+				seq(
+					'(',
+					'(',
+					commaSep(optional($.expression)),
+					')',
+					')',
+				),
+				seq(
+					field('index', seq(choice('(', '['), $.uint, choice(']', ')'))),
+					field('arguments', optional($.arguments)),
+				),
+				field('arguments', $.arguments),
+			)),
+		)),
+		// Standalone subobject block:
+		//   Begin Object Class=SpriteComponent Name=Sprite ... End Object
+		default_object_block: $ => seq(
+			caseInsensitive('begin'),
+			caseInsensitive('object'),
+			// UE3 subobject props are ';'-terminated (Constant=1.0f;),
+			// unlike top-level defaultproperties lines.
+			repeat(choice(
+				seq($.default_property_assignment, optional(';')),
+				$.backtick_macro,
+			)),
+			caseInsensitive('end'),
+			caseInsensitive('object'),
+		),
 		_default_property_value: $ => choice(
 			$.primary_expression,
+			$.uint,
+			// class'Foo' object literal (see assignment value note).
+			seq(caseInsensitive('class'), $.name),
+			$.default_object_block,
 			$.struct_value,
+			$.brace_struct_value,
 		),
-		struct_value: $ => seq(
+		// class'Foo', Texture2D'Bar', soundcue'Baz': the existing
+		// `reference` rule (identifier + name literal, EliotVU
+		// objectLiteral) already covers these in primary_expression.
+		struct_value: $ => prec.dynamic(1, seq(
 			'(',
-				commaSep(seq(field('left', $.identifier),  '=', field('right', $.primary_expression))),
+				commaSep(seq(
+					field('left', seq(
+						$.identifier,
+						// UE3 subscript LHS in struct literals:
+						// (AnimName[BS_STD_UP]="x", ...)
+						optional($.array_dimensions),
+					)),
+					'=',
+					field('right', choice(
+						$.primary_expression,
+						$.uint,
+						// class'Foo' object literal (see assignment value).
+						seq(caseInsensitive('class'), $.name),
+						$.default_object_block,
+						$.struct_value,
+						$.brace_struct_value,
+					)),
+				)),
 			')'
+		)),
+		// UE3 brace struct literal in defaultproperties:
+		//   ViewOffset={(
+		//     OffsetHigh=(X=-1200,Y=0,Z=0),
+		//     ...
+		//   )}
+		// Same shape as the paren form, brace-delimited; inner items may
+		// themselves be brace structs ({(...)}), paren structs, or plain
+		// values, with optional trailing comma.
+		brace_struct_value: $ => seq(
+			'{',
+				optional(commaSep1(choice(
+					seq(
+						field('left', seq(
+							$.identifier,
+							optional($.array_dimensions),
+						)),
+						'=',
+						field('right', choice(
+							$.primary_expression,
+							$.uint,
+							// class'Foo' object literal (see assignment value).
+							seq(caseInsensitive('class'), $.name),
+							$.default_object_block,
+							$.struct_value,
+							$.brace_struct_value,
+						)),
+					),
+					$.struct_value,
+					$.brace_struct_value,
+					$.primary_expression,
+				))),
+				optional(','),
+			'}'
 		),
 
 		for_statement: $ => seq(
 			caseInsensitive('for'), '(',
-			field('init', $.assignment_expression), ';',
-			field('condition', $.expression), ';',
-			field('update', $.expression), ')',
+			field('init', optional($.expression)), ';',
+			field('condition', optional($.expression)), ';',
+			field('update', optional($.expression)), ')',
 			field('body', $.statement),
 		),
 
-		foreach_statement: $ => seq(
+		// UE3 iterators: AllActors(class'X', P), TouchingActors(...),
+		// WorldInfo.AllControllers(...). The head is almost always a call
+		// or member chain, so parse it as primary expressions (no bare
+		// binary operators): EliotVU foreachStatement takes a
+		// primaryExpression, and iterator args live in the call's argument
+		// list anyway.
+		// UE3 iterators: AllActors(class'X', P), TouchingActors(...),
+		// WorldInfo.AllControllers(...). Only call-shaped heads are
+		// supported (bare-identifier iterators do not occur in the corpus):
+		//   foreach AllActors(class'P', P) { ... }
+		//   foreach WorldInfo.AllControllers(class'PC', PC) { ... }
+		// The iterator call is inlined here (not call_expression) because
+		// an outer call_expression alternative would be LR-ambiguous with
+		// member_expression at generate time.
+		foreach_iterator_call: $ => prec(10, seq(
 			caseInsensitive('foreach'),
-			field('iterator', $.identifier),
+			// Head can be Ident(args), Member(args), or a call result
+			// followed by .Member(args): GetWorldInfo().AllControllers(..).
+			field('function', choice(
+				$.identifier,
+				$.member_expression,
+				seq($.call_expression, '.', $.identifier),
+			)),
 			field('arguments', $.arguments),
 			field('body', $.statement),
-		),
+		)),
 
 		while_statement: $ => seq(
-			caseInsensitive('while'), '(',
-			field('condition', $.expression), ')',
+			caseInsensitive('while'),
+			field('condition', $.condition),
 			field('body', $.statement),
 		),
 
@@ -280,21 +487,47 @@ module.exports = grammar({
 			'}',
 		),
 
+		// UE3 struct modifiers (EliotVU UCParser.g4 structModifier, gen 3):
+		// struct native transient ExportedStruct { ... };
 		struct_declaration: $ => seq(
 			caseInsensitive('struct'),
+			field('modifiers', repeat($.struct_modifier)),
 			field('name', $.identifier),
 			optional(seq(
 				caseInsensitive('extends'),
 				field('parent', $.identifier),
 			)),
 			field('body', $.struct_body),
+			// UE3 form is `};` (340 corpus hits); the trailing ';' lives
+			// here so struct_body stays clean for the upstream test.
 			';',
 		),
-		struct_body: $ => seq(
-			'{',
-			repeat($.variable_declaration),
-			'}',
+		struct_modifier: $ => choice(
+			caseInsensitive('native'),
+			caseInsensitive('transient'),
+			caseInsensitive('export'),
+			caseInsensitive('init'),
+			caseInsensitive('atomic'),
+			caseInsensitive('atomicwhencooked'),
+			caseInsensitive('immutable'),
+			caseInsensitive('immutablewhencooked'),
+			caseInsensitive('strictconfig'),
+			caseInsensitive('long'),
+			// licensee fallback, mirroring unidentifiedModifier
+			$._unidentified_modifier,
 		),
+		struct_body: $ => prec.right(seq(
+			'{',
+			repeat(choice(
+				$.variable_declaration,
+				$.constant_declaration,
+				$.cpp_style_declaration,
+				$.struct_cpp_text,
+				$.struct_default_properties,
+				$.backtick_macro,
+			)),
+			'}',
+		)),
 
 		constant_declaration: $ => seq(
 			caseInsensitive('const'),
@@ -333,6 +566,16 @@ module.exports = grammar({
 			';',
 		),
 
+		// UE3 C++-style native declarations inside struct bodies (e.g.
+		// ContentTagIndex.uc): 'static UContentTagIndex*
+		// GetLocalContentTagIndex();'. Opaque: punctuated type tokens +
+		// name + parens + ';'. Matches only when the line contains '*' or
+		// C++ scope '::' so plain UnrealScript locals never take it.
+		cpp_style_declaration: $ => token(seq(
+			/[^;\n{}]*[*][^;\n{}]*/,
+			';',
+		)),
+
 		_config_modifier: $ => seq(
 			caseInsensitive('config'),
 			optional(seq(
@@ -349,27 +592,45 @@ module.exports = grammar({
         ')'
       ),
     ),
-    _native_modifier: $ => seq(
+    	_native_modifier: $ => seq(
 			caseInsensitive('native'),
 			optional(seq(
 				'(',
-				field('token', optional($.uint)),
+				field('token', optional(choice($.uint, $.identifier, $.string))),
 				')'
 			)),
 		),
+
+		_native_only_modifier: $ => prec(1, seq(
+			caseInsensitive('native'),
+			'(',
+			field('token', optional(choice($.uint, $.identifier, $.string))),
+			')',
+		)),
 
 		_class_depends_modifier: $ => seq(
 			caseInsensitive('dependson'),
 			optional(seq(
 				'(',
-				$.identifier,
+				commaSep1($.identifier),
 				')'
 			)),
 		),
 
 		_class_within_modifier: $ => seq(
 			caseInsensitive('within'),
+			choice($.nested_identifier, $.identifier),
+		),
+
+		// UE3 (EliotVU UCParser.g4 classModifier): licensees add custom
+		// modifiers constantly, so accept any identifier + args instead of
+		// failing the whole class header (unidentifiedModifier). The args
+		// are REQUIRED: otherwise a bare identifier is ambiguous with the
+		// declaration's type (LR(1) cannot decide `var Foo Bar;`). Bare
+		// licensee modifiers without parens remain unsupported.
+		_unidentified_modifier: $ => seq(
 			$.identifier,
+			seq('(', /[^)]*/, ')'),
 		),
 
 		_class_display_categories_modifier: $ => seq(
@@ -382,9 +643,17 @@ module.exports = grammar({
 		),
 
 		class_modifier: $ => choice(
+			// native(X) with parens binds tighter than the bare keyword
+			// (native(AI) class modifier vs a type named by identifier).
+			$._native_only_modifier,
+			// Bare native (no parens): legal UE3, 714 corpus hits, but
+			// ambiguous with a type named 'native' in var position only —
+			// class headers have no type, so the bare keyword is safe HERE
+			// (kept OUT of variable_modifier/function_modifier where the
+			// parens form + identifier disambiguate instead).
+			caseInsensitive('native'),
 			caseInsensitive('abstract'),
 			caseInsensitive('notplaceable'),
-			caseInsensitive('native'),
 			choice(caseInsensitive('nativereplication'), caseInsensitive('nonativereplication')),
 			caseInsensitive('safereplace'),
 			caseInsensitive('perobjectconfig'),
@@ -398,10 +667,27 @@ module.exports = grammar({
 			choice(caseInsensitive('collapsecategories'), caseInsensitive('dontcollapsecategories')),
 			choice(caseInsensitive('placeable'), caseInsensitive('notplaceable')),
 			choice(caseInsensitive('editinlinenew'), caseInsensitive('noteditinlinenew')),
-      $._config_modifier,
+       $._config_modifier,
 			$._class_depends_modifier,
 			$._class_within_modifier,
-			$._class_display_categories_modifier
+			// UE3 additions (EliotVU UCParser.g4 classModifier, gen 3):
+			caseInsensitive('deprecated'),
+			caseInsensitive('nativeonly'),
+			caseInsensitive('perobjectlocalized'),
+			caseInsensitive('dllbind'),
+			seq(caseInsensitive('classgroup'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('inherits'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('implements'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('hidecategories'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('showcategories'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('autoexpandcategories'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('autocollapsecategories'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('dontautocollapsecategories'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('dontsortcategories'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('forcescriptorder'), optional(seq('(', /[^)]*/, ')'))),
+			seq(caseInsensitive('classredirect'), optional(seq('(', /[^)]*/, ')'))),
+			// licensee fallback LAST: any other identifier + optional args.
+			$._unidentified_modifier
 		),
 
 		variable_modifier: $ => choice(
@@ -409,6 +695,8 @@ module.exports = grammar({
 			caseInsensitive('private'),
 			caseInsensitive('public'),
 			caseInsensitive('protected'),
+			caseInsensitive('protectedwrite'),
+			caseInsensitive('privatewrite'),
 			caseInsensitive('const'),
 			caseInsensitive('editconst'),
 			caseInsensitive('transient'),
@@ -420,7 +708,30 @@ module.exports = grammar({
 			caseInsensitive('export'),
 			caseInsensitive('noexport'),
 			caseInsensitive('globalconfig'),
+			// UE3 additions (EliotVU variableModifier, gen 3):
+			caseInsensitive('init'),
+			caseInsensitive('edithide'),
+			caseInsensitive('editfixedsize'),
+			caseInsensitive('editoronly'),
+			caseInsensitive('editortextbox'),
+			caseInsensitive('noclear'),
+			caseInsensitive('noimport'),
+			caseInsensitive('serializetext'),
+			caseInsensitive('nontransactional'),
+			caseInsensitive('instanced'),
+			caseInsensitive('databinding'),
+			caseInsensitive('duplicatetransient'),
+			caseInsensitive('repretry'),
+			caseInsensitive('repnotify'),
+			caseInsensitive('interp'),
+			caseInsensitive('notforconsole'),
+			caseInsensitive('archetype'),
+			caseInsensitive('crosslevelactive'),
+			caseInsensitive('crosslevelpassive'),
+			caseInsensitive('allowabstract'),
 			$._config_modifier,
+			// licensee fallback LAST.
+			$._unidentified_modifier,
 		),
 
 		state_modifier: _ => choice(
@@ -429,8 +740,12 @@ module.exports = grammar({
 		),
 
 		function_modifier: $ => choice(
+			// native(...) with parens binds tighter than the bare keyword
+			// (native Timer() state functions vs the native modifier).
+			$._native_only_modifier,
 			caseInsensitive('static'),
 			caseInsensitive('private'),
+			caseInsensitive('public'),
 			caseInsensitive('protected'),
 			caseInsensitive('simulated'),
 			caseInsensitive('singular'),
@@ -438,7 +753,31 @@ module.exports = grammar({
 			caseInsensitive('latent'),
 			caseInsensitive('iterator'),
 			caseInsensitive('exec'),
+			// UE3 replication/role specifiers (EliotVU functionSpecifier):
+			caseInsensitive('reliable'),
+			caseInsensitive('unreliable'),
+			caseInsensitive('server'),
+			caseInsensitive('client'),
+			caseInsensitive('demorecording'),
+			caseInsensitive('dllimport'),
+			caseInsensitive('virtual'),
+			caseInsensitive('const'),
+			caseInsensitive('noexport'),
+			caseInsensitive('noexportheader'),
+			caseInsensitive('transient'),
+			caseInsensitive('k2call'),
+			caseInsensitive('k2pure'),
+			caseInsensitive('k2override'),
 			$._native_modifier,
+			// licensee fallback LAST.
+			// NOTE: the call-shaped fallback ($._unidentified_modifier,
+			// 'ident(args)') is deliberately ABSENT here. A function
+			// modifier position followed by ident+parens is exactly a
+			// call head ('F1(a+b)'), so the fallback shadowed every
+			// call_expression in statement position. Unknown function
+			// modifiers remain unsupported; class/var modifiers keep the
+			// fallback, where no call head can follow. (Verified by
+			// parsing the full 4,327-file GoW2 corpus with/without it.)
 		),
 
 		parameter_modifier: _ => choice(
@@ -446,18 +785,25 @@ module.exports = grammar({
 			caseInsensitive('optional'),
 			caseInsensitive('coerce'),
 			caseInsensitive('skip'),
+			// UE3: 'const out Type Name' is pervasive (e.g. const out
+			// InputEventParameters). EliotVU paramModifier likewise.
+			caseInsensitive('const'),
 		),
 
 		function_parameters: $ => seq(
 			'(',
 			commaSep(
 				seq(
-					optional($.parameter_modifier),
+					repeat($.parameter_modifier),
 					field('type', $.type),
 					field('name', $.identifier),
+					// UE3 optional default values: function F(optional int X=3)
+					optional(seq('=', $.expression)),
 				)
 			),
-			')'
+			')',
+			// UE3 trailing const: function F() const;
+			optional(caseInsensitive('const')),
 		),
 
 		_declaration_heritage: $ => seq(
@@ -471,32 +817,55 @@ module.exports = grammar({
 			'}'
 		)),
 
-		label: $ => seq(
-			$.identifier, ':',
-		),
-		_statement: $ => choice(
-			$.local_variable_declaration,
-			$.statement,
-		),
+ 	label: $ => seq(
+ 		$.identifier, ':',
+ 	),
+ 	_statement: $ => choice(
+ 		$.local_variable_declaration,
+ 		$.statement,
+ 	),
 
-		statement: $ => choice(
-			$.block,
-			$.declaration,
-			$.expression_statement,
-			$.if_statement,
-			$.for_statement,
-			$.foreach_statement,
-			$.while_statement,
-			$.do_until_statement,
-			$.switch_statement,
-			$.continue_statement,
-			$.break_statement,
-			$.assert_statement,
-			$.return_statement,
-			$.label,
-		),
+ 	statement: $ => choice(
+ 		$.block,
+ 		$.declaration,
+ 		$.backtick_macro,
+ 		$.expression_statement,
+ 		$.if_statement,
+ 		$.for_statement,
+ 		$.while_statement,
+ 		$.do_until_statement,
+ 		$.foreach_iterator_call,
+ 		$.switch_statement,
+ 		$.continue_statement,
+ 		$.break_statement,
+ 		$.stop_statement,
+ 		$.goto_statement,
+ 		$.assert_statement,
+ 		$.return_statement,
+ 		$.label,
+ 	),
 
-		expression_statement: $ => seq(
+ 	// 'goto Label;' and 'stop;' only. GotoState('X') / Goto('X') are
+ 	// ordinary latent function calls (call_expression): the paren form
+ 	// is accepted HERE (not as a call) so latent gotos stay local
+ 	// instead of erroring.
+ 	goto_statement: $ => seq(
+ 		caseInsensitive('goto'),
+ 		// UE3 latent 'Goto('X')' accepted TOGETHER with the call reading:
+ 		// keep the paren form FIRST so the goto token wins over a generic
+ 		// call_expression at statement start.
+ 		choice(
+ 			seq('(', field('label', choice($.identifier, $.name)), ')'),
+ 			field('label', choice($.identifier, $.name)),
+ 		),
+ 		';',
+ 	),
+ 	stop_statement: _ => seq(
+ 		caseInsensitive('stop'),
+ 		';'
+ 	),
+
+    	expression_statement: $ => seq(
 			$._expression,
 			';',
 		),
@@ -604,6 +973,10 @@ module.exports = grammar({
 			['-', 10],
 			['!', 10],
 			['~', 10],
+			// UE3 pre-increment/decrement as unary: ++i, --j common in
+			// for-loop updates (i+=2 was covered; ++i was not).
+			['++', 10],
+			['--', 10],
 		].map(([operator, precedence]) =>
 			prec.left(precedence, seq(
 				field('operator', operator),
@@ -639,18 +1012,36 @@ module.exports = grammar({
 			$.primitive_type,
 			$.native_type,
 			$.dynamic_array,
-			$.class,
+			$.class_type,
+			$.delegate_type,
+			// UE3 dotted type refs: var GearPawn.BodyStance X; (nested
+			// identifier covers Class.Member).
+			$.nested_identifier,
 			$.identifier,
 		),
+
+		// UE3: delegate<OnClicked> parameter/return types (EliotVU
+		// delegateType; qualifiedIdentifier hardcoded to 2 levels there).
+		delegate_type: $ => prec.right(seq(
+			caseInsensitive('delegate'),
+			optional(seq('<', $.nested_identifier, '>')),
+		)),
 
 		dynamic_array: $ => prec.right(seq(
 			caseInsensitive('array'),
 			'<', $.type, optional(seq(',', $.uint)), '>',
 		)),
-		class: $ => prec.right(seq(
+		class_type: $ => seq(
 			caseInsensitive('class'),
 			optional(seq('<', $.type, '>')),
-		)),
+		),
+		// class'Foo': object literal. DISTINCT RULE (not inlined into
+		// every value position): reference ALSO matches ident+name, so
+		// both parse shapes are available and LR picks by context.
+		class_literal: $ => seq(
+			caseInsensitive('class'),
+			$.name,
+		),
 
 		primitive_type: _ => choice(
 			caseInsensitive('bool'),
@@ -708,14 +1099,17 @@ module.exports = grammar({
 
 		string: $ => seq(
 			'"',
-			repeat(choice(
-				alias($.unescaped_double_string_fragment, $.string_fragment),
-				$.escape_sequence,
-			)),
+				repeat(choice(
+					alias($.unescaped_double_string_fragment, $.string_fragment),
+					$.escape_sequence,
+				)),
 			'"',
 		),
 		unescaped_double_string_fragment: _ => token.immediate(prec(1, /[^"\\\r\n]+/)),
 		unescaped_single_string_fragment: _ => token.immediate(prec(1, /[^'\\\r\n]+/)),
+		// Bare ':' inside double-quoted strings (localized refs). A named
+		// rule so it survives tokenization as its own leaf.
+		colon_in_string: _ => ':',
 		escape_sequence: _ => token.immediate('\\'),
 		name: $ => prec.right(seq(
 			'\'',
@@ -742,9 +1136,9 @@ module.exports = grammar({
 				seq(decimal_digits, optional(seq(optional('_'), decimal_digits))),
 			);
 			const decimal_literal = choice(
-				seq(optional(choice('-', '+')), decimal_integer_literal, '.', optional(decimal_digits), optional(exponent_part)),
-				seq('.', decimal_digits, optional(exponent_part)),
-				seq(decimal_integer_literal, exponent_part),
+				seq(optional(choice('-', '+')), decimal_integer_literal, '.', optional(decimal_digits), optional(exponent_part), optional(/[fF]/)),
+				seq('.', decimal_digits, optional(exponent_part), optional(/[fF]/)),
+				seq(decimal_integer_literal, exponent_part, optional(/[fF]/)),
 				decimal_digits,
 			);
 			return token(prec.left(choice(

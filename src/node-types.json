@@ -12,6 +12,10 @@
         "named": true
       },
       {
+        "type": "cpp_text",
+        "named": true
+      },
+      {
         "type": "defaultproperties",
         "named": true
       },
@@ -36,7 +40,15 @@
         "named": true
       },
       {
+        "type": "struct_cpp_text",
+        "named": true
+      },
+      {
         "type": "struct_declaration",
+        "named": true
+      },
+      {
+        "type": "struct_default_properties",
         "named": true
       },
       {
@@ -153,68 +165,6 @@
       },
       {
         "type": "true",
-        "named": true
-      }
-    ]
-  },
-  {
-    "type": "statement",
-    "named": true,
-    "subtypes": [
-      {
-        "type": "assert_statement",
-        "named": true
-      },
-      {
-        "type": "block",
-        "named": true
-      },
-      {
-        "type": "break_statement",
-        "named": true
-      },
-      {
-        "type": "continue_statement",
-        "named": true
-      },
-      {
-        "type": "declaration",
-        "named": true
-      },
-      {
-        "type": "do_until_statement",
-        "named": true
-      },
-      {
-        "type": "expression_statement",
-        "named": true
-      },
-      {
-        "type": "for_statement",
-        "named": true
-      },
-      {
-        "type": "foreach_statement",
-        "named": true
-      },
-      {
-        "type": "if_statement",
-        "named": true
-      },
-      {
-        "type": "label",
-        "named": true
-      },
-      {
-        "type": "return_statement",
-        "named": true
-      },
-      {
-        "type": "switch_statement",
-        "named": true
-      },
-      {
-        "type": "while_statement",
         "named": true
       }
     ]
@@ -576,11 +526,143 @@
       "required": false,
       "types": [
         {
+          "type": "assert_statement",
+          "named": true
+        },
+        {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
+          "type": "declaration",
+          "named": true
+        },
+        {
+          "type": "do_until_statement",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "for_statement",
+          "named": true
+        },
+        {
+          "type": "foreach_iterator_call",
+          "named": true
+        },
+        {
+          "type": "goto_statement",
+          "named": true
+        },
+        {
+          "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "label",
+          "named": true
+        },
+        {
           "type": "local_variable_declaration",
           "named": true
         },
         {
-          "type": "statement",
+          "type": "return_statement",
+          "named": true
+        },
+        {
+          "type": "stop_statement",
+          "named": true
+        },
+        {
+          "type": "switch_statement",
+          "named": true
+        },
+        {
+          "type": "while_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "brace_struct_value",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "array_dimensions",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "brace_struct_value",
+            "named": true
+          },
+          {
+            "type": "class",
+            "named": false
+          },
+          {
+            "type": "default_object_block",
+            "named": true
+          },
+          {
+            "type": "primary_expression",
+            "named": true
+          },
+          {
+            "type": "struct_value",
+            "named": true
+          },
+          {
+            "type": "uint",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "brace_struct_value",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        },
+        {
+          "type": "struct_value",
           "named": true
         }
       ]
@@ -615,21 +697,6 @@
           }
         ]
       }
-    }
-  },
-  {
-    "type": "class",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": false,
-      "types": [
-        {
-          "type": "type",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -681,13 +748,51 @@
   {
     "type": "class_modifier",
     "named": true,
-    "fields": {},
+    "fields": {
+      "token": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "uint",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": false,
       "types": [
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "nested_identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "class_type",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "type",
           "named": true
         }
       ]
@@ -735,9 +840,109 @@
     "fields": {}
   },
   {
+    "type": "cpp_text",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "default",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "default_member_call",
+    "named": true,
+    "fields": {
+      "arguments": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "arguments",
+            "named": true
+          }
+        ]
+      },
+      "index": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "[",
+            "named": false
+          },
+          {
+            "type": "]",
+            "named": false
+          },
+          {
+            "type": "uint",
+            "named": true
+          }
+        ]
+      },
+      "method": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "object": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ".",
+            "named": false
+          },
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "default_object_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "default_property_assignment",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "default_property_assignment",
@@ -780,15 +985,31 @@
         ]
       },
       "value": {
-        "multiple": false,
+        "multiple": true,
         "required": true,
         "types": [
+          {
+            "type": "brace_struct_value",
+            "named": true
+          },
+          {
+            "type": "class",
+            "named": false
+          },
+          {
+            "type": "default_object_block",
+            "named": true
+          },
           {
             "type": "primary_expression",
             "named": true
           },
           {
             "type": "struct_value",
+            "named": true
+          },
+          {
+            "type": "uint",
             "named": true
           }
         ]
@@ -804,7 +1025,34 @@
       "required": false,
       "types": [
         {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "default_member_call",
+          "named": true
+        },
+        {
+          "type": "default_object_block",
+          "named": true
+        },
+        {
           "type": "default_property_assignment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "delegate_type",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "nested_identifier",
           "named": true
         }
       ]
@@ -819,7 +1067,71 @@
         "required": true,
         "types": [
           {
-            "type": "statement",
+            "type": "assert_statement",
+            "named": true
+          },
+          {
+            "type": "backtick_macro",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_statement",
+            "named": true
+          },
+          {
+            "type": "continue_statement",
+            "named": true
+          },
+          {
+            "type": "declaration",
+            "named": true
+          },
+          {
+            "type": "do_until_statement",
+            "named": true
+          },
+          {
+            "type": "expression_statement",
+            "named": true
+          },
+          {
+            "type": "for_statement",
+            "named": true
+          },
+          {
+            "type": "foreach_iterator_call",
+            "named": true
+          },
+          {
+            "type": "goto_statement",
+            "named": true
+          },
+          {
+            "type": "if_statement",
+            "named": true
+          },
+          {
+            "type": "label",
+            "named": true
+          },
+          {
+            "type": "return_statement",
+            "named": true
+          },
+          {
+            "type": "stop_statement",
+            "named": true
+          },
+          {
+            "type": "switch_statement",
+            "named": true
+          },
+          {
+            "type": "while_statement",
             "named": true
           }
         ]
@@ -951,14 +1263,78 @@
         "required": true,
         "types": [
           {
-            "type": "statement",
+            "type": "assert_statement",
+            "named": true
+          },
+          {
+            "type": "backtick_macro",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_statement",
+            "named": true
+          },
+          {
+            "type": "continue_statement",
+            "named": true
+          },
+          {
+            "type": "declaration",
+            "named": true
+          },
+          {
+            "type": "do_until_statement",
+            "named": true
+          },
+          {
+            "type": "expression_statement",
+            "named": true
+          },
+          {
+            "type": "for_statement",
+            "named": true
+          },
+          {
+            "type": "foreach_iterator_call",
+            "named": true
+          },
+          {
+            "type": "goto_statement",
+            "named": true
+          },
+          {
+            "type": "if_statement",
+            "named": true
+          },
+          {
+            "type": "label",
+            "named": true
+          },
+          {
+            "type": "return_statement",
+            "named": true
+          },
+          {
+            "type": "stop_statement",
+            "named": true
+          },
+          {
+            "type": "switch_statement",
+            "named": true
+          },
+          {
+            "type": "while_statement",
             "named": true
           }
         ]
       },
       "condition": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "expression",
@@ -968,17 +1344,17 @@
       },
       "init": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
-            "type": "assignment_expression",
+            "type": "expression",
             "named": true
           }
         ]
       },
       "update": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "expression",
@@ -989,7 +1365,7 @@
     }
   },
   {
-    "type": "foreach_statement",
+    "type": "foreach_iterator_call",
     "named": true,
     "fields": {
       "arguments": {
@@ -1007,17 +1383,93 @@
         "required": true,
         "types": [
           {
-            "type": "statement",
+            "type": "assert_statement",
+            "named": true
+          },
+          {
+            "type": "backtick_macro",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_statement",
+            "named": true
+          },
+          {
+            "type": "continue_statement",
+            "named": true
+          },
+          {
+            "type": "declaration",
+            "named": true
+          },
+          {
+            "type": "do_until_statement",
+            "named": true
+          },
+          {
+            "type": "expression_statement",
+            "named": true
+          },
+          {
+            "type": "for_statement",
+            "named": true
+          },
+          {
+            "type": "foreach_iterator_call",
+            "named": true
+          },
+          {
+            "type": "goto_statement",
+            "named": true
+          },
+          {
+            "type": "if_statement",
+            "named": true
+          },
+          {
+            "type": "label",
+            "named": true
+          },
+          {
+            "type": "return_statement",
+            "named": true
+          },
+          {
+            "type": "stop_statement",
+            "named": true
+          },
+          {
+            "type": "switch_statement",
+            "named": true
+          },
+          {
+            "type": "while_statement",
             "named": true
           }
         ]
       },
-      "iterator": {
-        "multiple": false,
+      "function": {
+        "multiple": true,
         "required": true,
         "types": [
           {
+            "type": ".",
+            "named": false
+          },
+          {
+            "type": "call_expression",
+            "named": true
+          },
+          {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "member_expression",
             "named": true
           }
         ]
@@ -1073,7 +1525,7 @@
         "required": false,
         "types": [
           {
-            "type": "type",
+            "type": "function_return_type",
             "named": true
           }
         ]
@@ -1088,6 +1540,14 @@
         "multiple": false,
         "required": false,
         "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
           {
             "type": "uint",
             "named": true
@@ -1126,7 +1586,26 @@
       "required": false,
       "types": [
         {
+          "type": "expression",
+          "named": true
+        },
+        {
           "type": "parameter_modifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "function_return_type",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "type",
           "named": true
         }
       ]
@@ -1138,6 +1617,26 @@
     "fields": {}
   },
   {
+    "type": "goto_statement",
+    "named": true,
+    "fields": {
+      "label": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "if_statement",
     "named": true,
     "fields": {
@@ -1146,7 +1645,71 @@
         "required": false,
         "types": [
           {
-            "type": "statement",
+            "type": "assert_statement",
+            "named": true
+          },
+          {
+            "type": "backtick_macro",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_statement",
+            "named": true
+          },
+          {
+            "type": "continue_statement",
+            "named": true
+          },
+          {
+            "type": "declaration",
+            "named": true
+          },
+          {
+            "type": "do_until_statement",
+            "named": true
+          },
+          {
+            "type": "expression_statement",
+            "named": true
+          },
+          {
+            "type": "for_statement",
+            "named": true
+          },
+          {
+            "type": "foreach_iterator_call",
+            "named": true
+          },
+          {
+            "type": "goto_statement",
+            "named": true
+          },
+          {
+            "type": "if_statement",
+            "named": true
+          },
+          {
+            "type": "label",
+            "named": true
+          },
+          {
+            "type": "return_statement",
+            "named": true
+          },
+          {
+            "type": "stop_statement",
+            "named": true
+          },
+          {
+            "type": "switch_statement",
+            "named": true
+          },
+          {
+            "type": "while_statement",
             "named": true
           }
         ]
@@ -1166,7 +1729,71 @@
         "required": true,
         "types": [
           {
-            "type": "statement",
+            "type": "assert_statement",
+            "named": true
+          },
+          {
+            "type": "backtick_macro",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_statement",
+            "named": true
+          },
+          {
+            "type": "continue_statement",
+            "named": true
+          },
+          {
+            "type": "declaration",
+            "named": true
+          },
+          {
+            "type": "do_until_statement",
+            "named": true
+          },
+          {
+            "type": "expression_statement",
+            "named": true
+          },
+          {
+            "type": "for_statement",
+            "named": true
+          },
+          {
+            "type": "foreach_iterator_call",
+            "named": true
+          },
+          {
+            "type": "goto_statement",
+            "named": true
+          },
+          {
+            "type": "if_statement",
+            "named": true
+          },
+          {
+            "type": "label",
+            "named": true
+          },
+          {
+            "type": "return_statement",
+            "named": true
+          },
+          {
+            "type": "stop_statement",
+            "named": true
+          },
+          {
+            "type": "switch_statement",
+            "named": true
+          },
+          {
+            "type": "while_statement",
             "named": true
           }
         ]
@@ -1517,11 +2144,75 @@
       "required": false,
       "types": [
         {
+          "type": "assert_statement",
+          "named": true
+        },
+        {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
+          "type": "declaration",
+          "named": true
+        },
+        {
+          "type": "do_until_statement",
+          "named": true
+        },
+        {
           "type": "exec_directive",
           "named": true
         },
         {
-          "type": "statement",
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "for_statement",
+          "named": true
+        },
+        {
+          "type": "foreach_iterator_call",
+          "named": true
+        },
+        {
+          "type": "goto_statement",
+          "named": true
+        },
+        {
+          "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "label",
+          "named": true
+        },
+        {
+          "type": "return_statement",
+          "named": true
+        },
+        {
+          "type": "stop_statement",
+          "named": true
+        },
+        {
+          "type": "switch_statement",
+          "named": true
+        },
+        {
+          "type": "while_statement",
           "named": true
         }
       ]
@@ -1642,11 +2333,75 @@
       "required": false,
       "types": [
         {
+          "type": "assert_statement",
+          "named": true
+        },
+        {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
+          "type": "declaration",
+          "named": true
+        },
+        {
+          "type": "do_until_statement",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "for_statement",
+          "named": true
+        },
+        {
+          "type": "foreach_iterator_call",
+          "named": true
+        },
+        {
+          "type": "goto_statement",
+          "named": true
+        },
+        {
+          "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "label",
+          "named": true
+        },
+        {
           "type": "local_variable_declaration",
           "named": true
         },
         {
-          "type": "statement",
+          "type": "return_statement",
+          "named": true
+        },
+        {
+          "type": "stop_statement",
+          "named": true
+        },
+        {
+          "type": "switch_statement",
+          "named": true
+        },
+        {
+          "type": "while_statement",
           "named": true
         }
       ]
@@ -1700,6 +2455,11 @@
   },
   {
     "type": "state_modifier",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "stop_statement",
     "named": true,
     "fields": {}
   },
@@ -1771,11 +2531,36 @@
       "required": false,
       "types": [
         {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "constant_declaration",
+          "named": true
+        },
+        {
+          "type": "cpp_style_declaration",
+          "named": true
+        },
+        {
+          "type": "struct_cpp_text",
+          "named": true
+        },
+        {
+          "type": "struct_default_properties",
+          "named": true
+        },
+        {
           "type": "variable_declaration",
           "named": true
         }
       ]
     }
+  },
+  {
+    "type": "struct_cpp_text",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "struct_declaration",
@@ -1787,6 +2572,16 @@
         "types": [
           {
             "type": "struct_body",
+            "named": true
+          }
+        ]
+      },
+      "modifiers": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "struct_modifier",
             "named": true
           }
         ]
@@ -1814,6 +2609,48 @@
     }
   },
   {
+    "type": "struct_default_properties",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "default_member_call",
+          "named": true
+        },
+        {
+          "type": "default_object_block",
+          "named": true
+        },
+        {
+          "type": "default_property_assignment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "struct_modifier",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "struct_value",
     "named": true,
     "fields": {
@@ -1821,6 +2658,10 @@
         "multiple": true,
         "required": false,
         "types": [
+          {
+            "type": "array_dimensions",
+            "named": true
+          },
           {
             "type": "identifier",
             "named": true
@@ -1832,7 +2673,27 @@
         "required": false,
         "types": [
           {
+            "type": "brace_struct_value",
+            "named": true
+          },
+          {
+            "type": "class",
+            "named": false
+          },
+          {
+            "type": "default_object_block",
+            "named": true
+          },
+          {
             "type": "primary_expression",
+            "named": true
+          },
+          {
+            "type": "struct_value",
+            "named": true
+          },
+          {
+            "type": "uint",
             "named": true
           }
         ]
@@ -1909,11 +2770,75 @@
       "required": true,
       "types": [
         {
-          "type": "statement",
+          "type": "assert_statement",
+          "named": true
+        },
+        {
+          "type": "backtick_macro",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
+          "type": "declaration",
+          "named": true
+        },
+        {
+          "type": "do_until_statement",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "for_statement",
+          "named": true
+        },
+        {
+          "type": "foreach_iterator_call",
+          "named": true
+        },
+        {
+          "type": "goto_statement",
+          "named": true
+        },
+        {
+          "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "label",
+          "named": true
+        },
+        {
+          "type": "return_statement",
+          "named": true
+        },
+        {
+          "type": "stop_statement",
           "named": true
         },
         {
           "type": "switch_condition",
+          "named": true
+        },
+        {
+          "type": "switch_statement",
+          "named": true
+        },
+        {
+          "type": "while_statement",
           "named": true
         }
       ]
@@ -1959,7 +2884,11 @@
       "required": true,
       "types": [
         {
-          "type": "class",
+          "type": "class_type",
+          "named": true
+        },
+        {
+          "type": "delegate_type",
           "named": true
         },
         {
@@ -1972,6 +2901,10 @@
         },
         {
           "type": "native_type",
+          "named": true
+        },
+        {
+          "type": "nested_identifier",
           "named": true
         },
         {
@@ -2008,7 +2941,15 @@
             "named": false
           },
           {
+            "type": "++",
+            "named": false
+          },
+          {
             "type": "-",
+            "named": false
+          },
+          {
+            "type": "--",
             "named": false
           },
           {
@@ -2227,7 +3168,71 @@
         "required": true,
         "types": [
           {
-            "type": "statement",
+            "type": "assert_statement",
+            "named": true
+          },
+          {
+            "type": "backtick_macro",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_statement",
+            "named": true
+          },
+          {
+            "type": "continue_statement",
+            "named": true
+          },
+          {
+            "type": "declaration",
+            "named": true
+          },
+          {
+            "type": "do_until_statement",
+            "named": true
+          },
+          {
+            "type": "expression_statement",
+            "named": true
+          },
+          {
+            "type": "for_statement",
+            "named": true
+          },
+          {
+            "type": "foreach_iterator_call",
+            "named": true
+          },
+          {
+            "type": "goto_statement",
+            "named": true
+          },
+          {
+            "type": "if_statement",
+            "named": true
+          },
+          {
+            "type": "label",
+            "named": true
+          },
+          {
+            "type": "return_statement",
+            "named": true
+          },
+          {
+            "type": "stop_statement",
+            "named": true
+          },
+          {
+            "type": "switch_statement",
+            "named": true
+          },
+          {
+            "type": "while_statement",
             "named": true
           }
         ]
@@ -2237,7 +3242,7 @@
         "required": true,
         "types": [
           {
-            "type": "expression",
+            "type": "condition",
             "named": true
           }
         ]
@@ -2437,6 +3442,14 @@
     "named": false
   },
   {
+    "type": "allowabstract",
+    "named": false
+  },
+  {
+    "type": "archetype",
+    "named": false
+  },
+  {
     "type": "array",
     "named": false
   },
@@ -2445,7 +3458,31 @@
     "named": false
   },
   {
+    "type": "atomic",
+    "named": false
+  },
+  {
+    "type": "atomicwhencooked",
+    "named": false
+  },
+  {
     "type": "auto",
+    "named": false
+  },
+  {
+    "type": "autocollapsecategories",
+    "named": false
+  },
+  {
+    "type": "autoexpandcategories",
+    "named": false
+  },
+  {
+    "type": "backtick_macro",
+    "named": true
+  },
+  {
+    "type": "begin",
     "named": false
   },
   {
@@ -2473,6 +3510,18 @@
     "named": false
   },
   {
+    "type": "classgroup",
+    "named": false
+  },
+  {
+    "type": "classredirect",
+    "named": false
+  },
+  {
+    "type": "client",
+    "named": false
+  },
+  {
     "type": "coerce",
     "named": false
   },
@@ -2493,7 +3542,27 @@
     "named": false
   },
   {
+    "type": "cpp_style_declaration",
+    "named": true
+  },
+  {
+    "type": "cpptext",
+    "named": false
+  },
+  {
     "type": "cross",
+    "named": false
+  },
+  {
+    "type": "crosslevelactive",
+    "named": false
+  },
+  {
+    "type": "crosslevelpassive",
+    "named": false
+  },
+  {
+    "type": "databinding",
     "named": false
   },
   {
@@ -2505,6 +3574,14 @@
     "named": false
   },
   {
+    "type": "delegate",
+    "named": false
+  },
+  {
+    "type": "demorecording",
+    "named": false
+  },
+  {
     "type": "dependson",
     "named": false
   },
@@ -2513,7 +3590,19 @@
     "named": false
   },
   {
+    "type": "dllbind",
+    "named": false
+  },
+  {
+    "type": "dllimport",
+    "named": false
+  },
+  {
     "type": "do",
+    "named": false
+  },
+  {
+    "type": "dontautocollapsecategories",
     "named": false
   },
   {
@@ -2521,7 +3610,15 @@
     "named": false
   },
   {
+    "type": "dontsortcategories",
+    "named": false
+  },
+  {
     "type": "dot",
+    "named": false
+  },
+  {
+    "type": "duplicatetransient",
     "named": false
   },
   {
@@ -2529,11 +3626,31 @@
     "named": false
   },
   {
+    "type": "editfixedsize",
+    "named": false
+  },
+  {
+    "type": "edithide",
+    "named": false
+  },
+  {
     "type": "editinlinenew",
     "named": false
   },
   {
+    "type": "editoronly",
+    "named": false
+  },
+  {
+    "type": "editortextbox",
+    "named": false
+  },
+  {
     "type": "else",
+    "named": false
+  },
+  {
+    "type": "end",
     "named": false
   },
   {
@@ -2585,6 +3702,10 @@
     "named": false
   },
   {
+    "type": "forcescriptorder",
+    "named": false
+  },
+  {
     "type": "foreach",
     "named": false
   },
@@ -2598,6 +3719,10 @@
   },
   {
     "type": "globalconfig",
+    "named": false
+  },
+  {
+    "type": "goto",
     "named": false
   },
   {
@@ -2621,7 +3746,27 @@
     "named": false
   },
   {
+    "type": "immutable",
+    "named": false
+  },
+  {
+    "type": "immutablewhencooked",
+    "named": false
+  },
+  {
+    "type": "implements",
+    "named": false
+  },
+  {
     "type": "imports",
+    "named": false
+  },
+  {
+    "type": "inherits",
+    "named": false
+  },
+  {
+    "type": "init",
     "named": false
   },
   {
@@ -2637,7 +3782,23 @@
     "named": false
   },
   {
+    "type": "interp",
+    "named": false
+  },
+  {
     "type": "iterator",
+    "named": false
+  },
+  {
+    "type": "k2call",
+    "named": false
+  },
+  {
+    "type": "k2override",
+    "named": false
+  },
+  {
+    "type": "k2pure",
     "named": false
   },
   {
@@ -2653,7 +3814,15 @@
     "named": false
   },
   {
+    "type": "long",
+    "named": false
+  },
+  {
     "type": "native",
+    "named": false
+  },
+  {
+    "type": "nativeonly",
     "named": false
   },
   {
@@ -2665,7 +3834,19 @@
     "named": false
   },
   {
+    "type": "noclear",
+    "named": false
+  },
+  {
     "type": "noexport",
+    "named": false
+  },
+  {
+    "type": "noexportheader",
+    "named": false
+  },
+  {
+    "type": "noimport",
     "named": false
   },
   {
@@ -2677,7 +3858,15 @@
     "named": false
   },
   {
+    "type": "nontransactional",
+    "named": false
+  },
+  {
     "type": "noteditinlinenew",
+    "named": false
+  },
+  {
+    "type": "notforconsole",
     "named": false
   },
   {
@@ -2687,6 +3876,10 @@
   {
     "type": "number",
     "named": true
+  },
+  {
+    "type": "object",
+    "named": false
   },
   {
     "type": "operator",
@@ -2709,6 +3902,10 @@
     "named": false
   },
   {
+    "type": "perobjectlocalized",
+    "named": false
+  },
+  {
     "type": "placeable",
     "named": false
   },
@@ -2725,11 +3922,19 @@
     "named": false
   },
   {
+    "type": "privatewrite",
+    "named": false
+  },
+  {
     "type": "property_identifier",
     "named": true
   },
   {
     "type": "protected",
+    "named": false
+  },
+  {
+    "type": "protectedwrite",
     "named": false
   },
   {
@@ -2742,6 +3947,14 @@
   },
   {
     "type": "replication",
+    "named": false
+  },
+  {
+    "type": "repnotify",
+    "named": false
+  },
+  {
+    "type": "repretry",
     "named": false
   },
   {
@@ -2758,6 +3971,14 @@
   },
   {
     "type": "self",
+    "named": false
+  },
+  {
+    "type": "serializetext",
+    "named": false
+  },
+  {
+    "type": "server",
     "named": false
   },
   {
@@ -2785,6 +4006,14 @@
     "named": false
   },
   {
+    "type": "stop",
+    "named": false
+  },
+  {
+    "type": "strictconfig",
+    "named": false
+  },
+  {
     "type": "string",
     "named": false
   },
@@ -2794,6 +4023,14 @@
   },
   {
     "type": "struct",
+    "named": false
+  },
+  {
+    "type": "structcpptext",
+    "named": false
+  },
+  {
+    "type": "structdefaultproperties",
     "named": false
   },
   {
@@ -2834,6 +4071,10 @@
   },
   {
     "type": "vector",
+    "named": false
+  },
+  {
+    "type": "virtual",
     "named": false
   },
   {
