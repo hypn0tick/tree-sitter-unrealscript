@@ -43,9 +43,7 @@ class ComplexClass extends Actor
     modifiers: (class_modifier
       (identifier))
     modifiers: (class_modifier)
-    modifiers: (class_modifier
-      (identifier)
-      (identifier))))
+    modifiers: (class_modifier)))
 
 ===============================================================================
 State declaration
@@ -115,8 +113,9 @@ function int DoSomething() {
 
 (program
   (function_declaration
-    return_type: (type
-      (primitive_type))
+    return_type: (function_return_type
+      (type
+        (primitive_type)))
     name: (identifier)
     parameters: (function_parameters)
     body: (block
@@ -378,8 +377,8 @@ foreach AllActors(class'MyThing', found) {
 ---
 
 (program
-  (foreach_statement
-    iterator: (identifier)
+  (foreach_iterator_call
+    function: (identifier)
     arguments: (arguments
       (reference
         (identifier)
@@ -405,7 +404,8 @@ while (bTrue) {
 
 (program
   (while_statement
-    condition: (identifier)
+    condition: (condition
+      (identifier))
     body: (block
       (if_statement
         condition: (condition
@@ -704,7 +704,7 @@ defaultproperties
             property: (property_identifier)))))
     (default_property_assignment
       property: (identifier)
-      value: (number))
+      value: (uint))
     (default_property_assignment
       property: (identifier)
       index: (uint)
@@ -736,11 +736,11 @@ defaultproperties
       property: (identifier)
       value: (struct_value
         left: (identifier)
-        right: (number)
+        right: (uint)
         left: (identifier)
-        right: (number)
+        right: (uint)
         left: (identifier)
-        right: (number)))))
+        right: (uint)))))
 
 ===============================================================================
 Defaultproperties references
@@ -750,7 +750,7 @@ defaultproperties
 {
 	 StatLogClass=class'UTStatLogFile'
 	 EndStatsClass=class'EndStats'
-	 Wat=Texture'Thing.WTF'
+	 Wat=Texture2D'Thing.WTF'
 }
 
 ---
@@ -759,14 +759,12 @@ defaultproperties
   (defaultproperties
     (default_property_assignment
       (identifier)
-      (reference
-        (identifier)
+      (class_literal
         (name
           (identifier))))
     (default_property_assignment
       (identifier)
-      (reference
-        (identifier)
+      (class_literal
         (name
           (identifier))))
     (default_property_assignment

@@ -1107,22 +1107,8 @@
                   "name": "uint"
                 },
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "PATTERN",
-                        "value": "[cC][lL][aA][sS][sS]"
-                      },
-                      "named": false,
-                      "value": "class"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "name"
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "class_literal"
                 },
                 {
                   "type": "SYMBOL",
@@ -1422,6 +1408,24 @@
         }
       ]
     },
+    "class_literal": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "[cC][lL][aA][sS][sS]"
+          },
+          "named": false,
+          "value": "class"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "name"
+        }
+      ]
+    },
     "_default_property_value": {
       "type": "CHOICE",
       "members": [
@@ -1434,22 +1438,8 @@
           "name": "uint"
         },
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "ALIAS",
-              "content": {
-                "type": "PATTERN",
-                "value": "[cC][lL][aA][sS][sS]"
-              },
-              "named": false,
-              "value": "class"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "name"
-            }
-          ]
+          "type": "SYMBOL",
+          "name": "class_literal"
         },
         {
           "type": "SYMBOL",
@@ -1732,22 +1722,8 @@
                                 "name": "uint"
                               },
                               {
-                                "type": "SEQ",
-                                "members": [
-                                  {
-                                    "type": "ALIAS",
-                                    "content": {
-                                      "type": "PATTERN",
-                                      "value": "[cC][lL][aA][sS][sS]"
-                                    },
-                                    "named": false,
-                                    "value": "class"
-                                  },
-                                  {
-                                    "type": "SYMBOL",
-                                    "name": "name"
-                                  }
-                                ]
+                                "type": "SYMBOL",
+                                "name": "class_literal"
                               },
                               {
                                 "type": "SYMBOL",
@@ -1777,6 +1753,14 @@
                     {
                       "type": "SYMBOL",
                       "name": "primary_expression"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "uint"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "class_literal"
                     }
                   ]
                 },
@@ -1839,22 +1823,8 @@
                                       "name": "uint"
                                     },
                                     {
-                                      "type": "SEQ",
-                                      "members": [
-                                        {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "PATTERN",
-                                            "value": "[cC][lL][aA][sS][sS]"
-                                          },
-                                          "named": false,
-                                          "value": "class"
-                                        },
-                                        {
-                                          "type": "SYMBOL",
-                                          "name": "name"
-                                        }
-                                      ]
+                                      "type": "SYMBOL",
+                                      "name": "class_literal"
                                     },
                                     {
                                       "type": "SYMBOL",
@@ -1884,6 +1854,14 @@
                           {
                             "type": "SYMBOL",
                             "name": "primary_expression"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "uint"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "class_literal"
                           }
                         ]
                       }
@@ -6838,24 +6816,6 @@
               "type": "BLANK"
             }
           ]
-        }
-      ]
-    },
-    "class_literal": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "ALIAS",
-          "content": {
-            "type": "PATTERN",
-            "value": "[cC][lL][aA][sS][sS]"
-          },
-          "named": false,
-          "value": "class"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "name"
         }
       ]
     },

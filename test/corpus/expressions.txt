@@ -230,7 +230,7 @@ BestWeapons[1++] = 1337;
       left: (subscript_expression
         object: (identifier)
         index: (update_expression
-        argument: (number)))
+          argument: (number)))
       right: (number))))
 
 ===============================================================================
@@ -283,8 +283,8 @@ RulesList = new(None) class'UBrowserTypesList';
       right: (new_expression
         type: (reference
           (identifier)
-					(name
-						(identifier))))))
+          (name
+            (identifier))))))
   (expression_statement
     (assignment_expression
       left: (identifier)
@@ -297,5 +297,5 @@ RulesList = new(None) class'UBrowserTypesList';
         outer: (identifier)
         type: (reference
           (identifier)
-					(name
-						(identifier)))))))
+          (name
+            (identifier)))))))

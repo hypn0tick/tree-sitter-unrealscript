@@ -627,8 +627,8 @@
             "named": true
           },
           {
-            "type": "class",
-            "named": false
+            "type": "class_literal",
+            "named": true
           },
           {
             "type": "default_object_block",
@@ -658,11 +658,19 @@
           "named": true
         },
         {
+          "type": "class_literal",
+          "named": true
+        },
+        {
           "type": "primary_expression",
           "named": true
         },
         {
           "type": "struct_value",
+          "named": true
+        },
+        {
+          "type": "uint",
           "named": true
         }
       ]
@@ -743,6 +751,21 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "class_literal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "name",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -985,7 +1008,7 @@
         ]
       },
       "value": {
-        "multiple": true,
+        "multiple": false,
         "required": true,
         "types": [
           {
@@ -993,8 +1016,8 @@
             "named": true
           },
           {
-            "type": "class",
-            "named": false
+            "type": "class_literal",
+            "named": true
           },
           {
             "type": "default_object_block",

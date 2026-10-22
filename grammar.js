@@ -253,13 +253,12 @@ module.exports = grammar({
 			'=',
 			field('value', choice(
 				$.primary_expression,
-				// class'Foo' object literal (keyword token, not identifier —
-				// the generic `reference` rule cannot match; EliotVU
-				// objectLiteral). NOTE: bare `2` (uint) does NOT parse as
+				// class'Foo' object literal: see class_literal rule.
+				// NOTE: bare `2` (uint) does NOT parse as
 				// primary_expression in this position — allow it directly
 				// (e.g. DamageWeaponFireMode=2).
 				$.uint,
-				seq(caseInsensitive('class'), $.name),
+				$.class_literal,
 				$.default_object_block,
 				$.struct_value,
 				$.brace_struct_value,
@@ -311,11 +310,20 @@ module.exports = grammar({
 			caseInsensitive('end'),
 			caseInsensitive('object'),
 		),
+		// class'Foo' object literal (keyword token, not identifier — the
+		// generic `reference` rule cannot match; EliotVU objectLiteral).
+		// NAMED rule (class_literal) so extractors/tests see a stable node.
+		// NOTE: prec(1) static (not dynamic): this must win over `reference`
+		// at LR table time, since 'class' lexes as BOTH the keyword token
+		// and a plain identifier.
+		class_literal: $ => prec(1, seq(
+			caseInsensitive('class'),
+			$.name,
+		)),
 		_default_property_value: $ => choice(
 			$.primary_expression,
 			$.uint,
-			// class'Foo' object literal (see assignment value note).
-			seq(caseInsensitive('class'), $.name),
+			$.class_literal,
 			$.default_object_block,
 			$.struct_value,
 			$.brace_struct_value,
@@ -365,8 +373,8 @@ module.exports = grammar({
 						field('right', choice(
 							$.primary_expression,
 							$.uint,
-							// class'Foo' object literal (see assignment value).
-							seq(caseInsensitive('class'), $.name),
+							// class'Foo' object literal: see class_literal rule.
+							$.class_literal,
 							$.default_object_block,
 							$.struct_value,
 							$.brace_struct_value,
@@ -375,6 +383,8 @@ module.exports = grammar({
 					$.struct_value,
 					$.brace_struct_value,
 					$.primary_expression,
+					$.uint,
+					$.class_literal,
 				))),
 				optional(','),
 			'}'
@@ -1120,6 +1130,11 @@ module.exports = grammar({
 			$.identifier,
 			$.name,
 		),
+
+		// class'Foo' is covered by class_literal above; keep `reference`
+		// for Texture2D'X'/name'Y' shapes. LR NOTE: at a `class` token the
+		// keyword reading (class_literal) and the identifier reading
+		// (reference) both match — class_literal's prec(1) wins.
 
 		uint: _ => token(/\d+/),
 
